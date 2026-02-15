@@ -40,7 +40,7 @@ Depends on services and type of requests such as reads or writes. Something like
 
 ### Algorithms
 
-We can use token bucker to allow spiky usage. The rate limit for the set duration is enforced, however users may use all of their tokens at the end of one window and start of another window to exceed the intended rate limit, to solve this we could use a rolling window or we could introduce a replenishment rate for the bucket which acts as an additional rate limit.
+We can use token bucket to allow spiky usage. The rate limit for the set duration is enforced, however users may use all of their tokens at the end of one window and start of another window to exceed the intended rate limit, to solve this we could use a rolling window or we could introduce a replenishment rate for the bucket which acts as an additional rate limit.
 
 ### State management
 
@@ -64,3 +64,18 @@ The system returns HTTP 429 Too Many Requests with a Retry-After header to manag
 # Mindmap
 
 ![Rate limiter mindmap](rlmm.png)
+
+# Architectural Decision Records (ADRs)
+
+## Token Bucket vs Leaky Bucket
+
+- Context: Requirement for a rate limiter supporting bursty traffic patterns.
+- Decision: Selected Token Bucket.
+- Reasoning: I choose token bucket in this scenario because the requirements specifically request compatibility with spiky usage. Token bucket gives users the freedom to use their tokens however they wish. Leaky bucket enforces a rigid constant outflow.
+
+## Redis Lua scripts vs application-level locks
+
+- Context: Managing distributed counters across multiple API Gateway instances.
+- Decision: Server-side Lua Scripting in Redis.
+- Reasoning: Atomicity - Lua scripts are executed as a single unit in redis avoiding race conditions without overhead of distributed locks.
+Performance - Avoids multiple trips by processing the "check and decrement" logic locally on the redis node.
